@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DEMO· AI Content Pipeline</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0c0f1a;
+      --surface: #131728;
+      --surface2: #1a2035;
+      --border: #252d45;
+      --accent: #4fffb0;
+      --accent2: #7b6fff;
+      --warn: #ffb547;
+      --danger: #ff5f7e;
+      --text: #e8eaf6;
+      --muted: #7a84a8;
+    }
+
+    body {
+      font-family: 'Sora', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(79,255,176,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(79,255,176,0.025) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── Layout ─────────────────────────────────────── */
+    .wrapper { position: relative; z-index: 1; display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: 300px; flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 32px 24px;
+      display: flex; flex-direction: column; gap: 24px;
+      position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    }
+
+    .main {
+      flex: 1; padding: 40px 40px 80px;
+      overflow-y: auto;
+    }
+
+    /* ── Sidebar ─────────────────────────────────────── */
+    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .brand-icon {
+      width: 42px; height: 42px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 0 20px rgba(79,255,176,0.2);
+    }
+    .brand h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .brand p { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+    .section-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .field { margin-bottom: 16px; }
+    .field label {
+      display: block;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.8px;
+      text-transform: uppercase; color: var(--muted);
+      margin-bottom: 7px;
+    }
+    .field select, .field input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 14px;
+      color: var(--text);
+      font-family: 'Sora', sans-serif;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .field select:focus, .field input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(79,255,176,0.1);
+    }
+    .field select option { background: var(--bg); }
+
+    .run-btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--accent), #22d9a0);
+      color: #0c0f1a;
+      border: none; border-radius: 11px;
+      padding: 13px 20px;
+      font-family: 'Sora', sans-serif;
+      font-size: 13px; font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s, box-shadow 0.2s, transform 0.1s;
+      box-shadow: 0 4px 20px rgba(79,255,176,0.25);
+      margin-top: 4px;
+    }
+    .run-btn:hover:not(:disabled) { box-shadow: 0 6px 28px rgba(79,255,176,0.4); }
+    .run-btn:active:not(:disabled) { transform: scale(0.99); }
+    .run-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* Pipeline legend */
+    .legend { margin-top: auto; }
+    .legend-item {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 12px; color: var(--muted);
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .legend-item:last-child { border-bottom: none; }
+    .legend-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+
+    /* ── Main ────────────────────────────────────────── */
+    .page-title { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 6px; }
+    .page-sub { font-size: 13px; color: var(--muted); margin-bottom: 36px; }
+
+    /* Agent step cards */
+    .pipeline { display: flex; flex-direction: column; gap: 0; }
+
+    .step-wrap { display: flex; flex-direction: column; align-items: stretch; }
+
+    .connector {
+      display: flex; align-items: center; gap: 0;
+      padding: 0 0 0 30px;
+    }
+    .connector-line {
+      width: 2px; height: 32px;
+      background: linear-gradient(to bottom, var(--border), var(--border));
+      margin-left: 17px;
+    }
+    .connector-label {
+      font-size: 11px; color: var(--muted); margin-left: 16px;
+      font-weight: 500;
+    }
+
+    .step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      overflow: hidden;
+      animation: fadeUp 0.35s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .step-header {
+      display: flex; align-items: center; gap: 14px;
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border);
+    }
+    .step-icon {
+      width: 38px; height: 38px;
+      border-radius: 11px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px; flex-shrink: 0;
+    }
+    .icon-gen  { background: rgba(123,111,255,0.15); border: 1px solid rgba(123,111,255,0.3); }
+    .icon-rev  { background: rgba(255,181,71,0.12);  border: 1px solid rgba(255,181,71,0.3);  }
+    .icon-ref  { background: rgba(79,255,176,0.10);  border: 1px solid rgba(79,255,176,0.25); }
+
+    .step-meta h3 { font-size: 15px; font-weight: 600; }
+    .step-meta p  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    .badge {
+      margin-left: auto; flex-shrink: 0;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.8px;
+      text-transform: uppercase;
+      padding: 4px 12px; border-radius: 20px;
+    }
+    .badge-running { background: rgba(123,111,255,0.15); color: var(--accent2); }
+    .badge-done    { background: rgba(79,255,176,0.10);  color: var(--accent); }
+    .badge-pass    { background: rgba(79,255,176,0.10);  color: #4fffb0; }
+    .badge-fail    { background: rgba(255,95,126,0.10);  color: #ff5f7e; }
+
+    .step-body { padding: 22px; }
+
+    /* Spinner */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(123,111,255,0.25);
+      border-top-color: var(--accent2);
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-row {
+      display: flex; align-items: center; gap: 10px;
+      color: var(--muted); font-size: 13px; padding: 12px 0;
+    }
+
+    /* Content rendering */
+    .sub-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 1.2px;
+      text-transform: uppercase; color: var(--muted);
+      margin-bottom: 9px;
+    }
+
+    .explanation {
+      background: var(--surface2);
+      border-left: 3px solid var(--accent2);
+      border-radius: 0 10px 10px 0;
+      padding: 16px 18px;
+      font-size: 14px; line-height: 1.75;
+      margin-bottom: 20px;
+    }
+
+    .mcq-grid { display: flex; flex-direction: column; gap: 12px; }
+    .mcq-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 15px 17px;
+    }
+    .mcq-q { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+    .mcq-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .mcq-opt {
+      font-size: 12px; padding: 7px 11px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      transition: all 0.15s;
+    }
+    .mcq-opt.correct {
+      border-color: var(--accent);
+      background: rgba(79,255,176,0.07);
+      color: var(--accent); font-weight: 600;
+    }
+
+    /* Review */
+    .verdict {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px; border-radius: 11px;
+      font-size: 13px; font-weight: 600;
+      margin-bottom: 16px;
+    }
+    .verdict.pass { background: rgba(79,255,176,0.07); color: #4fffb0; border: 1px solid rgba(79,255,176,0.2); }
+    .verdict.fail { background: rgba(255,95,126,0.07); color: #ff5f7e; border: 1px solid rgba(255,95,126,0.2); }
+
+    .feedback-list { display: flex; flex-direction: column; gap: 8px; }
+    .feedback-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      background: var(--surface2);
+      border-radius: 9px; padding: 11px 14px;
+      font-size: 13px; line-height: 1.6;
+    }
+    .fi-icon { flex-shrink: 0; font-size: 14px; margin-top: 1px; }
+
+    /* Empty state */
+    .empty {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 80px 20px; text-align: center; color: var(--muted);
+    }
+    .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.35; }
+    .empty h2 { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--text); opacity: 0.5; }
+    .empty p  { font-size: 13px; line-height: 1.6; }
+
+    /* Error */
+    .error-box {
+      background: rgba(255,95,126,0.08);
+      border: 1px solid rgba(255,95,126,0.25);
+      border-radius: 12px; padding: 18px 20px;
+      color: #ff5f7e; font-size: 13px;
+    }
+
+    /* JSON toggle */
+    .json-toggle {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+      color: var(--muted); cursor: pointer;
+      background: none; border: 1px solid var(--border);
+      border-radius: 7px; padding: 4px 10px;
+      margin-top: 14px; transition: all 0.15s;
+    }
+    .json-toggle:hover { color: var(--text); border-color: var(--muted); }
+    .json-block {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px; line-height: 1.65;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px;
+      color: #a8d8b0; overflow-x: auto;
+      white-space: pre-wrap; word-break: break-word;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 700px) {
+      .wrapper { flex-direction: column; }
+      .sidebar { width: 100%; height: auto; position: relative; border-right: none; border-bottom: 1px solid var(--border); }
+      .main { padding: 24px 16px 60px; }
+      .mcq-opts { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- ── Sidebar ──────────────────────────────────── -->
+  <aside class="sidebar">
+    <div>
+      <div class="brand">
+        <div class="brand-icon">🎓</div>
+        <div>
+          <h1>Demo</h1>
+          <p>AI Content Pipeline</p>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Configure</div>
+
+      <div class="field">
+        <label>Grade Level</label>
+        <select id="gradeInput">
+          <option value="1">Grade 1</option>
+          <option value="2">Grade 2</option>
+          <option value="3">Grade 3</option>
+          <option value="4" selected>Grade 4</option>
+          <option value="5">Grade 5</option>
+          <option value="6">Grade 6</option>
+          <option value="7">Grade 7</option>
+          <option value="8">Grade 8</option>
+          <option value="9">Grade 9</option>
+          <option value="10">Grade 10</option>
+          <option value="11">Grade 11</option>
+          <option value="12">Grade 12</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Topic</label>
+        <input id="topicInput" type="text" placeholder="e.g. Types of angles" value="Types of angles"/>
+      </div>
+
+      <button class="run-btn" id="runBtn" onclick="runPipeline()">
+        ▶&nbsp; Run Agent Pipeline
+      </button>
+    </div>
+
+    <div class="legend">
+      <div class="section-label" style="margin-bottom:12px">Pipeline Flow</div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#7b6fff"></div>
+        Generator Agent — creates content
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#ffb547"></div>
+        Reviewer Agent — evaluates content
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#4fffb0"></div>
+        Refiner — runs if review fails
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main ─────────────────────────────────────── -->
+  <main class="main">
+    <div class="page-title">Content Pipeline</div>
+    <div class="page-sub">Agent-based educational content generation with automated review </div>
+
+    <div class="pipeline" id="pipeline">
+      <div class="empty">
+        <div class="empty-icon">🤖</div>
+        <h2>Ready to generate</h2>
+        <p>Select a grade and topic,<br>then click <strong>Run Agent Pipeline</strong> to start.</p>
+      </div>
+    </div>
+  </main>
+
+</div>
+
+<script>
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  function el(id) { return document.getElementById(id); }
+
+  function makeSpinnerCard(title, subtitle, iconClass, icon) {
+    return `
+      <div class="step">
+        <div class="step-header">
+          <div class="step-icon ${iconClass}">${icon}</div>
+          <div class="step-meta"><h3>${title}</h3><p>${subtitle}</p></div>
+          <span class="badge badge-running">Running…</span>
+        </div>
+        <div class="step-body">
+          <div class="loading-row"><div class="spinner"></div> Calling Claude API…</div>
+        </div>
+      </div>`;
+  }
+
+  function connectorHTML(label = "") {
+    return `<div class="connector">
+      <div class="connector-line"></div>
+      ${label ? `<div class="connector-label">${label}</div>` : ""}
+    </div>`;
+  }
+
+  function renderMCQs(mcqs) {
+    return mcqs.map((q, i) => {
+      const opts = q.options.map(o => {
+        const letter = o.trim().charAt(0).toUpperCase();
+        const isCorrect = letter === q.answer.trim().toUpperCase();
+        return `<div class="mcq-opt ${isCorrect ? "correct" : ""}">${o}${isCorrect ? " ✓" : ""}</div>`;
+      }).join("");
+      return `<div class="mcq-card">
+        <div class="mcq-q">Q${i+1}. ${q.question}</div>
+        <div class="mcq-opts">${opts}</div>
+      </div>`;
+    }).join("");
+  }
+
+  function generatorCard(content, title = "Generator Agent", subtitle = "Draft educational content", iconClass = "icon-gen", icon = "✦", refined = false) {
+    const uid = "json_" + Math.random().toString(36).slice(2);
+    return `
+      <div class="step">
+        <div class="step-header">
+          <div class="step-icon ${iconClass}">${icon}</div>
+          <div class="step-meta"><h3>${title}</h3><p>${subtitle}</p></div>
+          <span class="badge badge-done">Done</span>
+        </div>
+        <div class="step-body">
+          <div class="sub-label">Explanation</div>
+          <div class="explanation">${content.explanation}</div>
+          <div class="sub-label">Multiple Choice Questions (correct answer highlighted)</div>
+          <div class="mcq-grid">${renderMCQs(content.mcqs)}</div>
+          <button class="json-toggle" onclick="toggleJSON('${uid}')">{ } Raw JSON</button>
+          <div id="${uid}" class="json-block" style="display:none">${JSON.stringify(content, null, 2)}</div>
+        </div>
+      </div>`;
+  }
+
+  function reviewerCard(review) {
+    const isPass = review.status === "pass";
+    const feedbackHTML = review.feedback.length
+      ? review.feedback.map(f => `<div class="feedback-item"><span class="fi-icon">⚠️</span><span>${f}</span></div>`).join("")
+      : `<div class="feedback-item"><span class="fi-icon">✅</span><span>No issues found. Content is age-appropriate, factually correct, and clear.</span></div>`;
+    const uid = "json_" + Math.random().toString(36).slice(2);
+    return `
+      <div class="step">
+        <div class="step-header">
+          <div class="step-icon icon-rev">⚖</div>
+          <div class="step-meta"><h3>Reviewer Agent</h3><p>Evaluated for age-appropriateness, correctness &amp; clarity</p></div>
+          <span class="badge ${isPass ? "badge-pass" : "badge-fail"}">${isPass ? "✓ Pass" : "✗ Fail"}</span>
+        </div>
+        <div class="step-body">
+          <div class="verdict ${isPass ? "pass" : "fail"}">
+            ${isPass ? "✅ Content passed review — no refinement needed." : "❌ Content failed review — triggering Refiner Agent."}
+          </div>
+          <div class="sub-label">Reviewer Feedback</div>
+          <div class="feedback-list">${feedbackHTML}</div>
+          <button class="json-toggle" onclick="toggleJSON('${uid}')">{ } Raw JSON</button>
+          <div id="${uid}" class="json-block" style="display:none">${JSON.stringify(review, null, 2)}</div>
+        </div>
+      </div>`;
+  }
+
+  function toggleJSON(id) {
+    const el = document.getElementById(id);
+    el.style.display = el.style.display === "none" ? "block" : "none";
+  }
+
+  // ── Pipeline runner ───────────────────────────────────────────────────────
+
+  async function runPipeline() {
+    const grade = parseInt(el("gradeInput").value);
+    const topic = el("topicInput").value.trim();
+    if (!topic) { alert("Please enter a topic."); return; }
+
+    const btn = el("runBtn");
+    const pipeline = el("pipeline");
+    btn.disabled = true;
+    btn.textContent = "⏳  Running pipeline…";
+
+    // Show generator loading
+    pipeline.innerHTML = makeSpinnerCard("Generator Agent", `Creating content for Grade ${grade} · ${topic}`, "icon-gen", "✦");
+
+    try {
+      const res = await fetch("/api/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ grade, topic })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        pipeline.innerHTML = `<div class="error-box">❌ <strong>Error:</strong> ${data.error || "Unknown error from server."}</div>`;
+        return;
+      }
+
+      // Build output HTML
+      let html = "";
+      html += generatorCard(data.draft);
+      html += connectorHTML("Reviewer evaluates draft");
+      html += reviewerCard(data.review);
+
+      if (data.refined_needed && data.refined) {
+        html += connectorHTML("Refiner re-generates with feedback");
+        html += generatorCard(
+          data.refined,
+          "Refiner Agent",
+          "Refined content based on reviewer feedback (1 pass)",
+          "icon-ref",
+          "↺"
+        );
+      }
+
+      pipeline.innerHTML = html;
+
+    } catch (err) {
+      pipeline.innerHTML = `<div class="error-box">❌ <strong>Network error:</strong> ${err.message}<br><br>Make sure the Flask server is running on <code>localhost:5000</code>.</div>`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "▶  Run Agent Pipeline";
+    }
+  }
+
+  // Allow Enter key on topic input
+  el("topicInput").addEventListener("keydown", e => { if (e.key === "Enter") runPipeline(); });
+</script>
+</body>
+</html>
