@@ -1,5 +1,4 @@
-# Eklavya AI Content Pipeline
-### Powered by Groq — 100% Free, No Credit Card
+# LearnPilot AI Content Pipeline
 
 ## Quick Start
 
