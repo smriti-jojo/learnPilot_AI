@@ -1,547 +1,1418 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>DEMO· AI Content Pipeline</title>
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    :root {
-      --bg: #0c0f1a;
-      --surface: #131728;
-      --surface2: #1a2035;
-      --border: #252d45;
-      --accent: #4fffb0;
-      --accent2: #7b6fff;
-      --warn: #ffb547;
-      --danger: #ff5f7e;
-      --text: #e8eaf6;
-      --muted: #7a84a8;
-    }
+    <title>LearnPilot AI — Multi-Agent Educational Content Intelligence</title>
 
-    body {
-      font-family: 'Sora', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-    body::before {
-      content: '';
-      position: fixed; inset: 0;
-      background-image:
-        linear-gradient(rgba(79,255,176,0.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(79,255,176,0.025) 1px, transparent 1px);
-      background-size: 40px 40px;
-      pointer-events: none; z-index: 0;
-    }
+        :root {
+            --bg: #f6f7fb;
+            --card: #ffffff;
+            --text: #172033;
+            --muted: #7b8497;
+            --border: #e7eaf0;
+            --purple: #6d5dfc;
+            --purple-dark: #5545e8;
+            --blue: #3b82f6;
+            --green: #10b981;
+            --red: #ef4444;
+            --orange: #f59e0b;
+        }
 
-    /* ── Layout ─────────────────────────────────────── */
-    .wrapper { position: relative; z-index: 1; display: flex; min-height: 100vh; }
+        body {
+            font-family: Inter, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
 
-    .sidebar {
-      width: 300px; flex-shrink: 0;
-      background: var(--surface);
-      border-right: 1px solid var(--border);
-      padding: 32px 24px;
-      display: flex; flex-direction: column; gap: 24px;
-      position: sticky; top: 0; height: 100vh; overflow-y: auto;
-    }
+        /* ================= HEADER ================= */
 
-    .main {
-      flex: 1; padding: 40px 40px 80px;
-      overflow-y: auto;
-    }
+        header {
+            height: 70px;
+            background: white;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 42px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
 
-    /* ── Sidebar ─────────────────────────────────────── */
-    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
-    .brand-icon {
-      width: 42px; height: 42px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px;
-      box-shadow: 0 0 20px rgba(79,255,176,0.2);
-    }
-    .brand h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.3px;
-      background: linear-gradient(90deg, var(--accent), var(--accent2));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    }
-    .brand p { font-size: 11px; color: var(--muted); margin-top: 1px; }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+        }
 
-    .section-label {
-      font-size: 10px; font-weight: 600; letter-spacing: 1.5px;
-      text-transform: uppercase; color: var(--muted);
-      margin-bottom: 10px;
-    }
+        .logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #6d5dfc, #8b5cf6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 800;
+            font-size: 18px;
+        }
 
-    .field { margin-bottom: 16px; }
-    .field label {
-      display: block;
-      font-size: 11px; font-weight: 600; letter-spacing: 0.8px;
-      text-transform: uppercase; color: var(--muted);
-      margin-bottom: 7px;
-    }
-    .field select, .field input {
-      width: 100%;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 11px 14px;
-      color: var(--text);
-      font-family: 'Sora', sans-serif;
-      font-size: 13px;
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .field select:focus, .field input:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(79,255,176,0.1);
-    }
-    .field select option { background: var(--bg); }
+        .brand-title {
+            font-size: 18px;
+            font-weight: 800;
+        }
 
-    .run-btn {
-      width: 100%;
-      background: linear-gradient(135deg, var(--accent), #22d9a0);
-      color: #0c0f1a;
-      border: none; border-radius: 11px;
-      padding: 13px 20px;
-      font-family: 'Sora', sans-serif;
-      font-size: 13px; font-weight: 700;
-      cursor: pointer;
-      transition: opacity 0.2s, box-shadow 0.2s, transform 0.1s;
-      box-shadow: 0 4px 20px rgba(79,255,176,0.25);
-      margin-top: 4px;
-    }
-    .run-btn:hover:not(:disabled) { box-shadow: 0 6px 28px rgba(79,255,176,0.4); }
-    .run-btn:active:not(:disabled) { transform: scale(0.99); }
-    .run-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .brand-subtitle {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 2px;
+        }
 
-    /* Pipeline legend */
-    .legend { margin-top: auto; }
-    .legend-item {
-      display: flex; align-items: center; gap: 10px;
-      font-size: 12px; color: var(--muted);
-      padding: 8px 0;
-      border-bottom: 1px solid var(--border);
-    }
-    .legend-item:last-child { border-bottom: none; }
-    .legend-dot {
-      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-    }
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #ecfdf5;
+            color: #047857;
+            padding: 8px 13px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+        }
 
-    /* ── Main ────────────────────────────────────────── */
-    .page-title { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 6px; }
-    .page-sub { font-size: 13px; color: var(--muted); margin-bottom: 36px; }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--green);
+            border-radius: 50%;
+            box-shadow: 0 0 0 4px #d1fae5;
+        }
 
-    /* Agent step cards */
-    .pipeline { display: flex; flex-direction: column; gap: 0; }
+        /* ================= MAIN ================= */
 
-    .step-wrap { display: flex; flex-direction: column; align-items: stretch; }
+        main {
+            max-width: 1250px;
+            margin: auto;
+            padding: 35px 25px 60px;
+        }
 
-    .connector {
-      display: flex; align-items: center; gap: 0;
-      padding: 0 0 0 30px;
-    }
-    .connector-line {
-      width: 2px; height: 32px;
-      background: linear-gradient(to bottom, var(--border), var(--border));
-      margin-left: 17px;
-    }
-    .connector-label {
-      font-size: 11px; color: var(--muted); margin-left: 16px;
-      font-weight: 500;
-    }
+        .hero {
+            margin-bottom: 28px;
+        }
 
-    .step {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      overflow: hidden;
-      animation: fadeUp 0.35s ease both;
-    }
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(10px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
+        .hero h1 {
+            font-size: 29px;
+            letter-spacing: -0.7px;
+            margin-bottom: 7px;
+        }
 
-    .step-header {
-      display: flex; align-items: center; gap: 14px;
-      padding: 18px 22px;
-      border-bottom: 1px solid var(--border);
-    }
-    .step-icon {
-      width: 38px; height: 38px;
-      border-radius: 11px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 17px; flex-shrink: 0;
-    }
-    .icon-gen  { background: rgba(123,111,255,0.15); border: 1px solid rgba(123,111,255,0.3); }
-    .icon-rev  { background: rgba(255,181,71,0.12);  border: 1px solid rgba(255,181,71,0.3);  }
-    .icon-ref  { background: rgba(79,255,176,0.10);  border: 1px solid rgba(79,255,176,0.25); }
+        .hero p {
+            color: var(--muted);
+            font-size: 14px;
+        }
 
-    .step-meta h3 { font-size: 15px; font-weight: 600; }
-    .step-meta p  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+        /* ================= INPUT CARD ================= */
 
-    .badge {
-      margin-left: auto; flex-shrink: 0;
-      font-size: 11px; font-weight: 600; letter-spacing: 0.8px;
-      text-transform: uppercase;
-      padding: 4px 12px; border-radius: 20px;
-    }
-    .badge-running { background: rgba(123,111,255,0.15); color: var(--accent2); }
-    .badge-done    { background: rgba(79,255,176,0.10);  color: var(--accent); }
-    .badge-pass    { background: rgba(79,255,176,0.10);  color: #4fffb0; }
-    .badge-fail    { background: rgba(255,95,126,0.10);  color: #ff5f7e; }
+        .input-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 5px 25px rgba(30, 40, 70, 0.04);
+            margin-bottom: 28px;
+        }
 
-    .step-body { padding: 22px; }
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 230px 190px;
+            gap: 16px;
+            align-items: end;
+        }
 
-    /* Spinner */
-    .spinner {
-      width: 18px; height: 18px;
-      border: 2px solid rgba(123,111,255,0.25);
-      border-top-color: var(--accent2);
-      border-radius: 50%;
-      animation: spin 0.65s linear infinite;
-      display: inline-block;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-row {
-      display: flex; align-items: center; gap: 10px;
-      color: var(--muted); font-size: 13px; padding: 12px 0;
-    }
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 800;
+            color: #697386;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            margin-bottom: 8px;
+        }
 
-    /* Content rendering */
-    .sub-label {
-      font-size: 10px; font-weight: 600; letter-spacing: 1.2px;
-      text-transform: uppercase; color: var(--muted);
-      margin-bottom: 9px;
-    }
+        input,
+        select {
+            width: 100%;
+            height: 45px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: #fafbfc;
+            padding: 0 14px;
+            font-size: 14px;
+            outline: none;
+            transition: 0.2s;
+        }
 
-    .explanation {
-      background: var(--surface2);
-      border-left: 3px solid var(--accent2);
-      border-radius: 0 10px 10px 0;
-      padding: 16px 18px;
-      font-size: 14px; line-height: 1.75;
-      margin-bottom: 20px;
-    }
+        input:focus,
+        select:focus {
+            border-color: var(--purple);
+            box-shadow: 0 0 0 3px rgba(109, 93, 252, 0.1);
+        }
 
-    .mcq-grid { display: flex; flex-direction: column; gap: 12px; }
-    .mcq-card {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 15px 17px;
-    }
-    .mcq-q { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
-    .mcq-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-    .mcq-opt {
-      font-size: 12px; padding: 7px 11px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: var(--bg);
-      transition: all 0.15s;
-    }
-    .mcq-opt.correct {
-      border-color: var(--accent);
-      background: rgba(79,255,176,0.07);
-      color: var(--accent); font-weight: 600;
-    }
+        button {
+            height: 45px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--purple), #815cf7);
+            color: white;
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.2s;
+        }
 
-    /* Review */
-    .verdict {
-      display: flex; align-items: center; gap: 10px;
-      padding: 12px 16px; border-radius: 11px;
-      font-size: 13px; font-weight: 600;
-      margin-bottom: 16px;
-    }
-    .verdict.pass { background: rgba(79,255,176,0.07); color: #4fffb0; border: 1px solid rgba(79,255,176,0.2); }
-    .verdict.fail { background: rgba(255,95,126,0.07); color: #ff5f7e; border: 1px solid rgba(255,95,126,0.2); }
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(109, 93, 252, 0.25);
+        }
 
-    .feedback-list { display: flex; flex-direction: column; gap: 8px; }
-    .feedback-item {
-      display: flex; align-items: flex-start; gap: 10px;
-      background: var(--surface2);
-      border-radius: 9px; padding: 11px 14px;
-      font-size: 13px; line-height: 1.6;
-    }
-    .fi-icon { flex-shrink: 0; font-size: 14px; margin-top: 1px; }
+        button:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+            transform: none;
+        }
 
-    /* Empty state */
-    .empty {
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: 80px 20px; text-align: center; color: var(--muted);
-    }
-    .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.35; }
-    .empty h2 { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--text); opacity: 0.5; }
-    .empty p  { font-size: 13px; line-height: 1.6; }
+        /* ================= WORKFLOW ================= */
 
-    /* Error */
-    .error-box {
-      background: rgba(255,95,126,0.08);
-      border: 1px solid rgba(255,95,126,0.25);
-      border-radius: 12px; padding: 18px 20px;
-      color: #ff5f7e; font-size: 13px;
-    }
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
 
-    /* JSON toggle */
-    .json-toggle {
-      font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
-      color: var(--muted); cursor: pointer;
-      background: none; border: 1px solid var(--border);
-      border-radius: 7px; padding: 4px 10px;
-      margin-top: 14px; transition: all 0.15s;
-    }
-    .json-toggle:hover { color: var(--text); border-color: var(--muted); }
-    .json-block {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11.5px; line-height: 1.65;
-      background: var(--bg); border: 1px solid var(--border);
-      border-radius: 10px; padding: 14px;
-      color: #a8d8b0; overflow-x: auto;
-      white-space: pre-wrap; word-break: break-word;
-      margin-top: 10px;
-    }
+        .section-title h2 {
+            font-size: 15px;
+        }
 
-    @media (max-width: 700px) {
-      .wrapper { flex-direction: column; }
-      .sidebar { width: 100%; height: auto; position: relative; border-right: none; border-bottom: 1px solid var(--border); }
-      .main { padding: 24px 16px 60px; }
-      .mcq-opts { grid-template-columns: 1fr; }
-    }
-  </style>
+        .section-title span {
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        .workflow-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 25px;
+            margin-bottom: 28px;
+        }
+
+        .workflow {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            align-items: center;
+        }
+
+        .agent {
+            position: relative;
+            min-height: 145px;
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 18px;
+            background: #fff;
+            transition: 0.3s;
+        }
+
+        .agent.active {
+            border-color: var(--purple);
+            box-shadow: 0 0 0 4px rgba(109, 93, 252, 0.08);
+            transform: translateY(-3px);
+        }
+
+        .agent.completed {
+            border-color: #a7f3d0;
+            background: #f0fdf8;
+        }
+
+        .agent-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 11px;
+            background: #f1efff;
+            color: var(--purple);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            font-weight: 800;
+            margin-bottom: 13px;
+        }
+
+        .agent h3 {
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+
+        .agent p {
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .agent-state {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            font-size: 9px;
+            text-transform: uppercase;
+            font-weight: 800;
+            color: #a0a7b5;
+        }
+
+        .agent.active .agent-state {
+            color: var(--purple);
+        }
+
+        .agent.completed .agent-state {
+            color: var(--green);
+        }
+
+        .arrow {
+            position: absolute;
+            right: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #c2c7d3;
+            font-size: 18px;
+            z-index: 5;
+        }
+
+        /* ================= LOOP ================= */
+
+        .loop {
+            margin-top: 20px;
+            padding: 13px 18px;
+            background: #faf9ff;
+            border: 1px dashed #cfc8ff;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            color: #6758e8;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .loop-icon {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #e9e5ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ================= TWO COLUMN ================= */
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 0.9fr 1.5fr;
+            gap: 25px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 23px;
+            box-shadow: 0 5px 25px rgba(30, 40, 70, 0.03);
+        }
+
+        /* ================= LOG ================= */
+
+        .log {
+            padding: 14px 0;
+            border-bottom: 1px solid #f0f1f5;
+            display: flex;
+            gap: 12px;
+        }
+
+        .log:last-child {
+            border-bottom: none;
+        }
+
+        .log-dot {
+            width: 27px;
+            height: 27px;
+            flex-shrink: 0;
+            border-radius: 8px;
+            background: #f1efff;
+            color: var(--purple);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .log-content {
+            flex: 1;
+        }
+
+        .log-title {
+            font-size: 12px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .log-text {
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .pass {
+            color: var(--green);
+            font-weight: 800;
+        }
+
+        .fail {
+            color: var(--red);
+            font-weight: 800;
+        }
+
+        /* ================= OUTPUT ================= */
+
+        .output-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .verified {
+            background: #ecfdf5;
+            color: #047857;
+            border-radius: 20px;
+            padding: 7px 12px;
+            font-size: 10px;
+            font-weight: 800;
+        }
+
+        .explanation {
+            background: #fafbfc;
+            border: 1px solid var(--border);
+            padding: 17px;
+            border-radius: 12px;
+            font-size: 13px;
+            line-height: 1.75;
+            color: #4b5565;
+            margin-bottom: 22px;
+        }
+
+        .mcq {
+            border: 1px solid var(--border);
+            border-radius: 13px;
+            padding: 17px;
+            margin-bottom: 12px;
+        }
+
+        .question {
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .option {
+            padding: 9px 11px;
+            background: #fafbfc;
+            border: 1px solid #edf0f4;
+            border-radius: 8px;
+            font-size: 11px;
+            margin-top: 6px;
+        }
+
+        .correct {
+            margin-top: 12px;
+            color: var(--green);
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        /* ================= EMPTY ================= */
+
+        .empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--muted);
+        }
+
+        .empty-icon {
+            width: 58px;
+            height: 58px;
+            border-radius: 15px;
+            background: #f1efff;
+            color: var(--purple);
+            margin: auto auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .empty h3 {
+            color: var(--text);
+            font-size: 15px;
+            margin-bottom: 6px;
+        }
+
+        .empty p {
+            font-size: 11px;
+        }
+
+        /* ================= RESPONSIVE ================= */
+
+        @media(max-width: 900px) {
+
+            .input-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .workflow {
+                grid-template-columns: 1fr;
+            }
+
+            .arrow {
+                display: none;
+            }
+
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            header {
+                padding: 0 18px;
+            }
+        }
+    </style>
 </head>
+
 <body>
-<div class="wrapper">
 
-  <!-- ── Sidebar ──────────────────────────────────── -->
-  <aside class="sidebar">
-    <div>
-      <div class="brand">
-        <div class="brand-icon">🎓</div>
-        <div>
-          <h1>Demo</h1>
-          <p>AI Content Pipeline</p>
+<header>
+
+    <div class="brand">
+
+        <div class="logo">
+            E
         </div>
-      </div>
+
+        <div>
+            <div class="brand-title">
+                LearnPilot <span style="color:#6d5dfc;">AI</span>
+            </div>
+
+            <div class="brand-subtitle">
+                Multi-Agent Educational Content Intelligence
+            </div>
+        </div>
+
     </div>
 
-    <div>
-      <div class="section-label">Configure</div>
+    <!-- <div class="status">
+        <div class="status-dot"></div>
+        Groq API Connected
+    </div> -->
 
-      <div class="field">
-        <label>Grade Level</label>
-        <select id="gradeInput">
-          <option value="1">Grade 1</option>
-          <option value="2">Grade 2</option>
-          <option value="3">Grade 3</option>
-          <option value="4" selected>Grade 4</option>
-          <option value="5">Grade 5</option>
-          <option value="6">Grade 6</option>
-          <option value="7">Grade 7</option>
-          <option value="8">Grade 8</option>
-          <option value="9">Grade 9</option>
-          <option value="10">Grade 10</option>
-          <option value="11">Grade 11</option>
-          <option value="12">Grade 12</option>
-        </select>
-      </div>
+</header>
 
-      <div class="field">
-        <label>Topic</label>
-        <input id="topicInput" type="text" placeholder="e.g. Types of angles" value="Types of angles"/>
-      </div>
 
-      <button class="run-btn" id="runBtn" onclick="runPipeline()">
-        ▶&nbsp; Run Agent Pipeline
-      </button>
+<main>
+
+    <div class="hero">
+
+        <h1>
+            AI Content Generation & Validation
+        </h1>
+
+        <p>
+            Generate grade-aware educational content using a multi-agent
+            generation, review and validation loop.
+        </p>
+
     </div>
 
-    <div class="legend">
-      <div class="section-label" style="margin-bottom:12px">Pipeline Flow</div>
-      <div class="legend-item">
-        <div class="legend-dot" style="background:#7b6fff"></div>
-        Generator Agent — creates content
-      </div>
-      <div class="legend-item">
-        <div class="legend-dot" style="background:#ffb547"></div>
-        Reviewer Agent — evaluates content
-      </div>
-      <div class="legend-item">
-        <div class="legend-dot" style="background:#4fffb0"></div>
-        Refiner — runs if review fails
-      </div>
+
+    <!-- INPUT -->
+
+    <div class="input-card">
+
+        <div class="input-grid">
+
+            <div>
+
+                <label>
+                    Subject / Topic
+                </label>
+
+                <input
+                    id="topic"
+                    type="text"
+                    placeholder="e.g. Photosynthesis, Fractions, Artificial Intelligence"
+                >
+
+            </div>
+
+
+            <div>
+
+                <label>
+                    Target Grade
+                </label>
+
+                <select id="grade">
+
+                    <option value="3">
+                        Grade 3 — Primary
+                    </option>
+
+                    <option value="5" selected>
+                        Grade 5 — Intermediate
+                    </option>
+
+                    <option value="8">
+                        Grade 8 — Middle School
+                    </option>
+
+                    <option value="12">
+                        Grade 12 — High School
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <button id="runBtn">
+                ▶ Initialize AI Pipeline
+            </button>
+
+        </div>
+
     </div>
-  </aside>
 
-  <!-- ── Main ─────────────────────────────────────── -->
-  <main class="main">
-    <div class="page-title">Content Pipeline</div>
-    <div class="page-sub">Agent-based educational content generation with automated review </div>
 
-    <div class="pipeline" id="pipeline">
-      <div class="empty">
-        <div class="empty-icon">🤖</div>
-        <h2>Ready to generate</h2>
-        <p>Select a grade and topic,<br>then click <strong>Run Agent Pipeline</strong> to start.</p>
-      </div>
+    <!-- WORKFLOW -->
+
+    <div class="section-title">
+
+        <h2>
+            Agent Workflow
+        </h2>
+
+        <span id="pipelineStatus">
+            Waiting for input
+        </span>
+
     </div>
-  </main>
 
-</div>
+
+    <div class="workflow-card">
+
+        <div class="workflow">
+
+            <div class="agent" id="agentGenerator">
+
+                <div class="agent-state">
+                    WAITING
+                </div>
+
+                <div class="agent-icon">
+                    ✦
+                </div>
+
+                <h3>
+                    Generator Agent
+                </h3>
+
+                <p>
+                    Creates an initial educational explanation and assessment.
+                </p>
+
+                <div class="arrow">→</div>
+
+            </div>
+
+
+            <div class="agent" id="agentReviewer">
+
+                <div class="agent-state">
+                    WAITING
+                </div>
+
+                <div class="agent-icon">
+                    ◉
+                </div>
+
+                <h3>
+                    Reviewer Agent
+                </h3>
+
+                <p>
+                    Checks accuracy, grade suitability and assessment quality.
+                </p>
+
+                <div class="arrow">→</div>
+
+            </div>
+
+
+            <div class="agent" id="agentCorrection">
+
+                <div class="agent-state">
+                    WAITING
+                </div>
+
+                <div class="agent-icon">
+                    ↻
+                </div>
+
+                <h3>
+                    Correction Loop
+                </h3>
+
+                <p>
+                    Sends failed material back for refinement and regeneration.
+                </p>
+
+                <div class="arrow">→</div>
+
+            </div>
+
+
+            <div class="agent" id="agentValidator">
+
+                <div class="agent-state">
+                    WAITING
+                </div>
+
+                <div class="agent-icon">
+                    ✓
+                </div>
+
+                <h3>
+                    Final Validator
+                </h3>
+
+                <p>
+                    Confirms that the final package satisfies the validation rules.
+                </p>
+
+                <div class="arrow">→</div>
+
+            </div>
+
+
+            <div class="agent" id="agentOutput">
+
+                <div class="agent-state">
+                    WAITING
+                </div>
+
+                <div class="agent-icon">
+                    ◆
+                </div>
+
+                <h3>
+                    Educational Package
+                </h3>
+
+                <p>
+                    Produces verified explanation and structured MCQs.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="loop">
+
+            <div class="loop-icon">
+                ↻
+            </div>
+
+            Reviewer detects an issue →
+            content enters correction loop →
+            reviewer validates again
+
+        </div>
+
+    </div>
+
+
+    <!-- RESULTS -->
+
+    <div id="resultsArea">
+
+        <div class="content-grid">
+
+            <!-- LOGS -->
+
+            <div class="card">
+
+                <div class="section-title">
+
+                    <h2>
+                        Agent Activity
+                    </h2>
+
+                    <span id="iterationCount">
+                        0 iterations
+                    </span>
+
+                </div>
+
+                <div id="logs">
+
+                    <div class="empty">
+
+                        <div class="empty-icon">
+                            ◌
+                        </div>
+
+                        <h3>
+                            Pipeline Idle
+                        </h3>
+
+                        <p>
+                            Enter a topic to start the multi-agent workflow.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- OUTPUT -->
+
+            <div class="card">
+
+                <div class="output-header">
+
+                    <h2>
+                        Final Educational Package
+                    </h2>
+
+                    <div
+                        class="verified"
+                        id="verificationBadge"
+                        style="display:none;"
+                    >
+                        ✓ VERIFIED
+                    </div>
+
+                </div>
+
+
+                <div id="output">
+
+                    <div class="empty">
+
+                        <div class="empty-icon">
+                            ◈
+                        </div>
+
+                        <h3>
+                            No content generated
+                        </h3>
+
+                        <p>
+                            Your verified educational package will appear here.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</main>
+
 
 <script>
-  // ── Helpers ───────────────────────────────────────────────────────────────
 
-  function el(id) { return document.getElementById(id); }
+const runBtn = document.getElementById("runBtn");
 
-  function makeSpinnerCard(title, subtitle, iconClass, icon) {
-    return `
-      <div class="step">
-        <div class="step-header">
-          <div class="step-icon ${iconClass}">${icon}</div>
-          <div class="step-meta"><h3>${title}</h3><p>${subtitle}</p></div>
-          <span class="badge badge-running">Running…</span>
+const agents = {
+
+    generator: document.getElementById("agentGenerator"),
+
+    reviewer: document.getElementById("agentReviewer"),
+
+    correction: document.getElementById("agentCorrection"),
+
+    validator: document.getElementById("agentValidator"),
+
+    output: document.getElementById("agentOutput")
+
+};
+
+
+function setAgent(agent, state) {
+
+    const element = agents[agent];
+
+    element.classList.remove("active", "completed");
+
+    const stateElement =
+        element.querySelector(".agent-state");
+
+    if (state === "active") {
+
+        element.classList.add("active");
+
+        stateElement.textContent = "RUNNING";
+
+    }
+
+    if (state === "completed") {
+
+        element.classList.add("completed");
+
+        stateElement.textContent = "COMPLETE";
+
+    }
+
+    if (state === "waiting") {
+
+        stateElement.textContent = "WAITING";
+
+    }
+
+}
+
+
+function resetAgents() {
+
+    Object.keys(agents).forEach(agent => {
+
+        setAgent(agent, "waiting");
+
+    });
+
+}
+
+
+function escapeHtml(value) {
+
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+}
+
+
+function delay(ms) {
+
+    return new Promise(resolve => setTimeout(resolve, ms));
+
+}
+
+
+function renderLogs(iterations) {
+
+    const logs = document.getElementById("logs");
+
+    document.getElementById("iterationCount").textContent =
+        `${iterations.length} iteration${iterations.length === 1 ? "" : "s"}`;
+
+    if (!iterations.length) {
+
+        logs.innerHTML = `
+            <div class="empty">
+                <div class="empty-icon">◌</div>
+                <h3>No agent iterations returned</h3>
+                <p>The backend did not return iteration details.</p>
+            </div>
+        `;
+
+        return;
+
+    }
+
+
+    logs.innerHTML = "";
+
+    iterations.forEach((iter, index) => {
+
+        const passed =
+            iter.review &&
+            iter.review.status === "pass";
+
+        let feedback = "";
+
+        if (
+            !passed &&
+            iter.review &&
+            Array.isArray(iter.review.feedback)
+        ) {
+
+            feedback =
+                iter.review.feedback
+                    .map(item => escapeHtml(item))
+                    .join(" • ");
+
+        }
+
+        if (iter.error) {
+
+            feedback =
+                "Pipeline error: " +
+                escapeHtml(iter.error);
+
+        }
+
+        const log = document.createElement("div");
+
+        log.className = "log";
+
+        log.innerHTML = `
+
+            <div class="log-dot">
+                ${index + 1}
+            </div>
+
+            <div class="log-content">
+
+                <div class="log-title">
+
+                    Iteration #${escapeHtml(iter.attempt)}
+
+                    <span class="${passed ? "pass" : "fail"}">
+
+                        ${passed ? " — PASSED" : " — REVIEW REQUIRED"}
+
+                    </span>
+
+                </div>
+
+                <div class="log-text">
+
+                    ${
+                        passed
+                        ? "Reviewer approved the generated educational material."
+                        : feedback || "Reviewer requested another generation cycle."
+                    }
+
+                </div>
+
+            </div>
+        `;
+
+        logs.appendChild(log);
+
+    });
+
+}
+
+
+function renderOutput(content) {
+
+    const output = document.getElementById("output");
+
+    if (!content || !content.explanation) {
+
+        output.innerHTML = `
+
+            <div class="empty">
+
+                <div class="empty-icon">!</div>
+
+                <h3>
+                    No final package returned
+                </h3>
+
+                <p>
+                    The backend completed without final educational content.
+                </p>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    let mcqs = "";
+
+    (content.mcqs || []).forEach((q, index) => {
+
+        const options = (q.options || [])
+            .map(option => `
+                <div class="option">
+                    ${escapeHtml(option)}
+                </div>
+            `)
+            .join("");
+
+        mcqs += `
+
+            <div class="mcq">
+
+                <div class="question">
+
+                    ${index + 1}.
+                    ${escapeHtml(q.question)}
+
+                </div>
+
+                ${options}
+
+                <div class="correct">
+
+                    ✓ Correct Answer:
+                    Option ${escapeHtml(q.answer)}
+
+                </div>
+
+            </div>
+
+        `;
+
+    });
+
+
+    output.innerHTML = `
+
+        <div>
+
+            <div
+                style="
+                    font-size:11px;
+                    font-weight:800;
+                    color:#7b8497;
+                    text-transform:uppercase;
+                    letter-spacing:.7px;
+                    margin-bottom:9px;
+                "
+            >
+                Generated Explanation
+            </div>
+
+            <div class="explanation">
+
+                ${escapeHtml(content.explanation)}
+
+            </div>
+
         </div>
-        <div class="step-body">
-          <div class="loading-row"><div class="spinner"></div> Calling Claude API…</div>
+
+
+        <div>
+
+            <div
+                style="
+                    font-size:11px;
+                    font-weight:800;
+                    color:#7b8497;
+                    text-transform:uppercase;
+                    letter-spacing:.7px;
+                    margin-bottom:9px;
+                "
+            >
+                Target Assessment — MCQs
+            </div>
+
+            ${mcqs}
+
         </div>
-      </div>`;
-  }
 
-  function connectorHTML(label = "") {
-    return `<div class="connector">
-      <div class="connector-line"></div>
-      ${label ? `<div class="connector-label">${label}</div>` : ""}
-    </div>`;
-  }
+    `;
 
-  function renderMCQs(mcqs) {
-    return mcqs.map((q, i) => {
-      const opts = q.options.map(o => {
-        const letter = o.trim().charAt(0).toUpperCase();
-        const isCorrect = letter === q.answer.trim().toUpperCase();
-        return `<div class="mcq-opt ${isCorrect ? "correct" : ""}">${o}${isCorrect ? " ✓" : ""}</div>`;
-      }).join("");
-      return `<div class="mcq-card">
-        <div class="mcq-q">Q${i+1}. ${q.question}</div>
-        <div class="mcq-opts">${opts}</div>
-      </div>`;
-    }).join("");
-  }
+}
 
-  function generatorCard(content, title = "Generator Agent", subtitle = "Draft educational content", iconClass = "icon-gen", icon = "✦", refined = false) {
-    const uid = "json_" + Math.random().toString(36).slice(2);
-    return `
-      <div class="step">
-        <div class="step-header">
-          <div class="step-icon ${iconClass}">${icon}</div>
-          <div class="step-meta"><h3>${title}</h3><p>${subtitle}</p></div>
-          <span class="badge badge-done">Done</span>
+
+runBtn.addEventListener("click", async () => {
+
+    const topic =
+        document.getElementById("topic").value.trim();
+
+    const grade =
+        document.getElementById("grade").value;
+
+    const status =
+        document.getElementById("pipelineStatus");
+
+
+    if (!topic) {
+
+        alert("Please enter a topic.");
+
+        return;
+
+    }
+
+
+    runBtn.disabled = true;
+
+    runBtn.textContent =
+        "Running AI Pipeline...";
+
+    resetAgents();
+
+
+    document.getElementById("logs").innerHTML = `
+        <div class="empty">
+
+            <div
+                class="empty-icon"
+                style="animation:spin 1s linear infinite;"
+            >
+                ◌
+            </div>
+
+            <h3>
+                Agents are working
+            </h3>
+
+            <p>
+                Generating and validating educational content...
+            </p>
+
         </div>
-        <div class="step-body">
-          <div class="sub-label">Explanation</div>
-          <div class="explanation">${content.explanation}</div>
-          <div class="sub-label">Multiple Choice Questions (correct answer highlighted)</div>
-          <div class="mcq-grid">${renderMCQs(content.mcqs)}</div>
-          <button class="json-toggle" onclick="toggleJSON('${uid}')">{ } Raw JSON</button>
-          <div id="${uid}" class="json-block" style="display:none">${JSON.stringify(content, null, 2)}</div>
+    `;
+
+
+    document.getElementById("output").innerHTML = `
+        <div class="empty">
+
+            <div class="empty-icon">
+                ◈
+            </div>
+
+            <h3>
+                Processing...
+            </h3>
+
+            <p>
+                Waiting for the final validated package.
+            </p>
+
         </div>
-      </div>`;
-  }
+    `;
 
-  function reviewerCard(review) {
-    const isPass = review.status === "pass";
-    const feedbackHTML = review.feedback.length
-      ? review.feedback.map(f => `<div class="feedback-item"><span class="fi-icon">⚠️</span><span>${f}</span></div>`).join("")
-      : `<div class="feedback-item"><span class="fi-icon">✅</span><span>No issues found. Content is age-appropriate, factually correct, and clear.</span></div>`;
-    const uid = "json_" + Math.random().toString(36).slice(2);
-    return `
-      <div class="step">
-        <div class="step-header">
-          <div class="step-icon icon-rev">⚖</div>
-          <div class="step-meta"><h3>Reviewer Agent</h3><p>Evaluated for age-appropriateness, correctness &amp; clarity</p></div>
-          <span class="badge ${isPass ? "badge-pass" : "badge-fail"}">${isPass ? "✓ Pass" : "✗ Fail"}</span>
-        </div>
-        <div class="step-body">
-          <div class="verdict ${isPass ? "pass" : "fail"}">
-            ${isPass ? "✅ Content passed review — no refinement needed." : "❌ Content failed review — triggering Refiner Agent."}
-          </div>
-          <div class="sub-label">Reviewer Feedback</div>
-          <div class="feedback-list">${feedbackHTML}</div>
-          <button class="json-toggle" onclick="toggleJSON('${uid}')">{ } Raw JSON</button>
-          <div id="${uid}" class="json-block" style="display:none">${JSON.stringify(review, null, 2)}</div>
-        </div>
-      </div>`;
-  }
 
-  function toggleJSON(id) {
-    const el = document.getElementById(id);
-    el.style.display = el.style.display === "none" ? "block" : "none";
-  }
+    document.getElementById("verificationBadge").style.display =
+        "none";
 
-  // ── Pipeline runner ───────────────────────────────────────────────────────
-
-  async function runPipeline() {
-    const grade = parseInt(el("gradeInput").value);
-    const topic = el("topicInput").value.trim();
-    if (!topic) { alert("Please enter a topic."); return; }
-
-    const btn = el("runBtn");
-    const pipeline = el("pipeline");
-    btn.disabled = true;
-    btn.textContent = "⏳  Running pipeline…";
-
-    // Show generator loading
-    pipeline.innerHTML = makeSpinnerCard("Generator Agent", `Creating content for Grade ${grade} · ${topic}`, "icon-gen", "✦");
 
     try {
-      const res = await fetch("/api/run", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ grade, topic })
-      });
 
-      const data = await res.json();
+        /* GENERATOR */
 
-      if (!res.ok || data.error) {
-        pipeline.innerHTML = `<div class="error-box">❌ <strong>Error:</strong> ${data.error || "Unknown error from server."}</div>`;
-        return;
-      }
+        status.textContent =
+            "Generator Agent is creating content";
 
-      // Build output HTML
-      let html = "";
-      html += generatorCard(data.draft);
-      html += connectorHTML("Reviewer evaluates draft");
-      html += reviewerCard(data.review);
+        setAgent("generator", "active");
 
-      if (data.refined_needed && data.refined) {
-        html += connectorHTML("Refiner re-generates with feedback");
-        html += generatorCard(
-          data.refined,
-          "Refiner Agent",
-          "Refined content based on reviewer feedback (1 pass)",
-          "icon-ref",
-          "↺"
-        );
-      }
+        await delay(500);
 
-      pipeline.innerHTML = html;
 
-    } catch (err) {
-      pipeline.innerHTML = `<div class="error-box">❌ <strong>Network error:</strong> ${err.message}<br><br>Make sure the Flask server is running on <code>localhost:5000</code>.</div>`;
+        /* BACKEND REQUEST */
+
+        const response = await fetch("/api/run", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+
+                topic: topic,
+
+                grade: parseInt(grade, 10)
+
+            })
+
+        });
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                `Server returned HTTP ${response.status}`
+            );
+
+        }
+
+
+        const data = await response.json();
+
+
+        setAgent("generator", "completed");
+
+
+        /* REVIEWER */
+
+        status.textContent =
+            "Reviewer Agent is evaluating content";
+
+        setAgent("reviewer", "active");
+
+        await delay(500);
+
+
+        const iterations =
+            data.iterations || [];
+
+
+        renderLogs(iterations);
+
+
+        const hasFailure =
+            iterations.some(iter =>
+                !iter.review ||
+                iter.review.status !== "pass"
+            );
+
+
+        setAgent("reviewer", "completed");
+
+
+        /* CORRECTION LOOP */
+
+        if (hasFailure) {
+
+            status.textContent =
+                "Correction loop activated";
+
+            setAgent("correction", "active");
+
+            await delay(700);
+
+            setAgent("correction", "completed");
+
+        } else {
+
+            status.textContent =
+                "No correction required";
+
+            setAgent("correction", "completed");
+
+        }
+
+
+        /* VALIDATOR */
+
+        status.textContent =
+            "Final Validator is checking package";
+
+        setAgent("validator", "active");
+
+        await delay(700);
+
+        setAgent("validator", "completed");
+
+
+        /* OUTPUT */
+
+        status.textContent =
+            "Educational package verified";
+
+        setAgent("output", "active");
+
+        await delay(400);
+
+        setAgent("output", "completed");
+
+
+        if (data.error) {
+
+            throw new Error(data.error);
+
+        }
+
+
+        renderOutput(data.final_content);
+
+
+        document.getElementById("verificationBadge")
+            .style.display = "block";
+
+
+        status.textContent =
+            "Pipeline completed successfully";
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        status.textContent =
+            "Pipeline execution failed";
+
+
+        document.getElementById("logs").innerHTML = `
+
+            <div class="empty">
+
+                <div class="empty-icon">
+                    !
+                </div>
+
+                <h3>
+                    Pipeline Error
+                </h3>
+
+                <p>
+                    ${escapeHtml(error.message)}
+                </p>
+
+            </div>
+
+        `;
+
     } finally {
-      btn.disabled = false;
-      btn.textContent = "▶  Run Agent Pipeline";
-    }
-  }
 
-  // Allow Enter key on topic input
-  el("topicInput").addEventListener("keydown", e => { if (e.key === "Enter") runPipeline(); });
+        runBtn.disabled = false;
+
+        runBtn.textContent =
+            "▶ Initialize AI Pipeline";
+
+    }
+
+});
+
 </script>
+
 </body>
 </html>
